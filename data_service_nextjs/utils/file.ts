@@ -14,37 +14,35 @@ class ObjectInfo{
   public baseDir
   public isDir 
   public items
-  public error
-  constructor(filePath:string,baseDir:string,isDir:boolean, error:boolean, innerItems:string[]){
+  constructor(filePath:string,baseDir:string,isDir:boolean, innerItems:string[]){
     this.filePath = filePath
     this.baseDir = baseDir
     this.isDir = isDir
     this.items = innerItems
-    this.error = error
   }
 
 }
 
-export async function findRequestedFile(filePath: string) {
-    const file = path.join(PUBLIC_DIR_ABS_PATH, filePath);
-    const { dir, name } = path.parse(file);
+export async function getObjectInfo(filePath: string) {
+    const fullPath = path.join(PUBLIC_DIR_ABS_PATH, filePath);
+    const { dir, name } = path.parse(fullPath);
 
     if(!fs.existsSync(dir))
-    return new ObjectInfo("",dir,false,true,[])
+    throw new Error("Base file directory does not exist")
 
     const files = await readdir(dir);
-    console.log({ name, dir, files });
     
     const requestedFile = files.find((f) => path.parse(f).name == name);
-    console.log({requestedFile})
 
     if(!requestedFile)
-    return new ObjectInfo("",dir,false,true,files)
+    throw new Error(`Cannot find element '${name}' in directory ${dir}, choose one of [${files}]`)
 
     if(isDir(requestedFile))
-    return  new ObjectInfo("",requestedFile,true,false ,await readdir(requestedFile))
+      return new ObjectInfo("",fullPath,true,await readdir(fullPath))
+  
+    return new ObjectInfo(path.join(dir,requestedFile),dir,false,files)
+}
 
-    const out = new ObjectInfo(file,dir,isDir(file),false,files)
-
-    return out
+export async function getBaseDirStruct(){
+    return await readdir(PUBLIC_DIR_ABS_PATH);
 }
