@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 import { getObjectInfo as getFileObjectInfo } from "../../../utils/file";
 import { readFile } from "fs/promises";
+import { fstat, statSync } from "fs";
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,6 +16,8 @@ export default async function handler(
 
     if (fileObjectInfo.isDir) 
       return res.status(400).send(fileObjectInfo.items);
+
+    console.log(statSync(fileObjectInfo.filePath))
 
     const buffer = await readFile(fileObjectInfo.filePath);
     const baseFile = path.parse(fileObjectInfo.filePath).base;
