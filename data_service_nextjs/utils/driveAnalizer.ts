@@ -13,7 +13,7 @@ export function produceDriveObject(dir: string, item: string) {
   return z;
 }
 
-export function driveAnalizer(baseDir: string, innerObjects: string[]) {
+export function catalogueAnalizer(baseDir: string, innerObjects: string[]) {
   let z = {} as DirectoryInfo;
   z.path = baseDir;
   z.items = innerObjects.map((i) => produceDriveObject(baseDir, i));
