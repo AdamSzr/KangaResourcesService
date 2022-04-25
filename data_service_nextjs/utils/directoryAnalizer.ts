@@ -1,9 +1,9 @@
-import { DiskObject } from "./../models/DiskObject";
-import { DirectoryInfo } from "./../models/DirectoryInfo";
-import fs, {Stats} from "fs";
+import { DiskObject } from "../models/DiskObject";
+import { DirectoryInfo } from "../models/DirectoryInfo";
+import fs from "fs";
 import path from "path";
 
-export function produceDriveObject(dir: string, item: string) {
+function produceDriveObject(dir: string, item: string) {
   let z = {} as DiskObject;
   const stats = fs.statSync(path.join(dir, item));
   z.type = stats.isDirectory() ? "DIR" : "FILE";

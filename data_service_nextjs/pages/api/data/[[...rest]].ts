@@ -8,13 +8,12 @@ import {
   isDir,
 } from "../../../utils/file";
 import { readFile } from "fs/promises";
-import { fstat, statSync } from "fs";
 import {
   LIST_DIRECTORY_ERROR,
   NO_CONTENT,
   WRONG_PATH,
 } from "../../../errors/errors";
-import { catalogueAnalizer } from "../../../utils/driveAnalizer";
+import { catalogueAnalizer as directoryAnalizer } from "../../../utils/directoryAnalizer";
 
 export const PUBLIC_DIR_ABS_PATH = path.join(process.cwd(), "public/data");
 
@@ -22,12 +21,13 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  /** Full path that can be either dir of file */ 
   const filePath = path.join(PUBLIC_DIR_ABS_PATH, ...req.query.rest??"");
   const listDir = req.query.list;
   try {
     const { dir, base } = path.parse(filePath);
 
-    if (!directoryExist(dir)) return res.status(400).send(WRONG_PATH);
+    if (!directoryExist(dir)) return res.status(404).send(WRONG_PATH);
 
     const { fullPath, requestedItem } =
       await getFileObjectInfo(dir, base);
@@ -36,7 +36,7 @@ export default async function handler(
 
     if (isDir(fullPath))
       if (listDir) {
-        const dirInfo = catalogueAnalizer(filePath, await getDirStruct(filePath));
+        const dirInfo = directoryAnalizer(filePath, await getDirStruct(filePath));
         return res.status(200).send(dirInfo);
       } else return res.status(400).send(LIST_DIRECTORY_ERROR);
 
