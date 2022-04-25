@@ -1,48 +1,59 @@
 import { readdir } from "fs/promises";
 import fs, { read } from "fs";
 import path from "path";
+import { RequestError } from "../models/RequestError";
+import { DirectoryInfo } from "../models/DirectoryInfo";
 
-const PUBLIC_DIR_ABS_PATH = path.join(process.cwd(), "public/data");
 
-
-function isDir(filePath:string){
-  return path.parse(filePath as string).ext==""
+function isDir(filePath: string) {
+  return path.parse(filePath as string).ext == "";
 }
 
-class ObjectInfo{
-  public filePath 
-  public baseDir
-  public isDir 
-  public items
-  constructor(filePath:string,baseDir:string,isDir:boolean, innerItems:string[]){
-    this.filePath = filePath
-    this.baseDir = baseDir
-    this.isDir = isDir
-    this.items = innerItems
+class ObjectInfo {
+  public filePath;
+  public baseDir;
+  public isDir;
+  public items;
+  constructor(
+    filePath: string,
+    baseDir: string,
+    isDir: boolean,
+    innerItems: string[]
+  ) {
+    this.filePath = filePath;
+    this.baseDir = baseDir;
+    this.isDir = isDir;
+    this.items = innerItems;
   }
-
 }
 
-export async function getObjectInfo(filePath: string) {
-    const fullPath = path.join(PUBLIC_DIR_ABS_PATH, filePath);
-    const { dir, name } = path.parse(fullPath);
+export async function getItemFromDir(directory: string, itemName: string) {
+  console.log({directory,itemName})
+  const itemsInDir = await readdir(directory);
+  console.log({ files: itemsInDir });
 
-    if(!fs.existsSync(dir))
-    throw new Error("Base file directory does not exist")
+  const requestedItem = itemsInDir.find((f) => path.parse(f).name == itemName);
 
-    const files = await readdir(dir);
-    
-    const requestedFile = files.find((f) => path.parse(f).name == name);
-
-    if(!requestedFile)
-    throw new Error(`Cannot find element '${name}' in directory ${dir}, choose one of [${files}]`)
-
-    if(isDir(requestedFile))
-      return new ObjectInfo("",fullPath,true,await readdir(fullPath))
-  
-    return new ObjectInfo(path.join(dir,requestedFile),dir,false,files)
+  return { requestedItem, itemsInDir};
 }
 
-export async function getBaseDirStruct(){
-    return await readdir(PUBLIC_DIR_ABS_PATH);
+export function directoryExist(fullPath: string) {
+  return fs.existsSync(fullPath);
+}
+
+export function baseDirExists(filePath: string) {
+  const { dir, name } = path.parse(filePath);
+  return directoryExist(dir);
+}
+
+
+export async function getObjectInfo(dir: string,itemName:string) {
+  const {requestedItem, itemsInDir} = await getItemFromDir(dir,itemName)
+  const fullPath = path.join(dir,requestedItem ?? '') 
+
+  return {fullPath,requestedItem,isDir:isDir(fullPath),itemsInDir}
+}
+
+export async function getDirStruct(dirPath:string) {
+  return await readdir(dirPath);
 }
