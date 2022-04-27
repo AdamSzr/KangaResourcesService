@@ -1,4 +1,4 @@
-package com.data.service
+package com.data.service.controller
 
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -13,9 +13,4 @@ class ExampleController {
         System.out.println(path)
         return "-> $path";
     }
-
-//    @GetMapping("/example")
-//    public fun one(): String {
-//        return "-> XD";
-//    }
 }
