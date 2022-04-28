@@ -1,5 +1,7 @@
 package com.data.service
 
+import com.data.service.errors.ERROR_REQUESTED_OBJ_IS_DIR
+import com.data.service.errors.ERROR_REQUESTED_PATH_NOT_EXIST
 import com.data.service.model.ResponseBodyStructure
 import com.data.service.util.GetDiskObjects
 import org.springframework.core.io.FileSystemResource
@@ -13,10 +15,7 @@ import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
-import kotlin.io.path.isRegularFile
+import kotlin.io.path.*
 
 
 @RestController
@@ -35,9 +34,6 @@ class ExampleController {
         return innerItems.find(predicate)
     }
 
-    public fun getRequestedResource(path:Path): FileSystemResource {
-        return FileSystemResource(path.absolutePathString())
-    }
 
 
     @GetMapping("/example")
@@ -54,6 +50,14 @@ class ExampleController {
 
         println("parentExist ->" + parrentPath.exists())
         println("fullPathExist -> " + fullPath.exists())
+        println("parentIsFile ->" + parrentPath.isRegularFile())
+        println("fullPathIsFile-> " + fullPath.isRegularFile())
+
+        if(!parrentPath.exists())
+            return ERROR_REQUESTED_PATH_NOT_EXIST
+
+        if(fullPath.exists() && fullPath.isDirectory())
+            return ERROR_REQUESTED_OBJ_IS_DIR
 
         if(fullPath.exists() && fullPath.isRegularFile()) {
             println("SUCCESS - 1")
@@ -88,10 +92,10 @@ class ExampleController {
             }
         }
 
+
         val items = getFilesFromDir(parrentPath)
         val innerObjects = GetDiskObjects(items as Array<File>)
-        val res = ResponseBodyStructure(fullPathString,innerObjects)
-//        items?.forEach { f -> res.addObject(GetDiskObjects(f)) }
+        val res = ResponseBodyStructure(parrentPath.toString(),innerObjects)
 
         return res
         }
