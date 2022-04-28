@@ -11,17 +11,17 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
-class DiskObjectAdapter (val files: Array<File>) {
 
-    fun GetDiskObjects(){
-        val objects = mutableListOf<DiskObject>()
-        for (f in files)
-        {
-            val type = if(f.isDirectory) DiskObjectType.DIR else DiskObjectType.FILE
-            val diskObj = DiskObject(f.name,type)
-            objects.add(diskObj)
-        }
+fun GetDiskObjects(filePaths:Array<File>): MutableList<DiskObject> {
+    val objects = mutableListOf<DiskObject>()
+    for (f in filePaths)
+    {
+        val type = if(f.isDirectory) DiskObjectType.DIR else DiskObjectType.FILE
+        val diskObj = DiskObject(f.name,type)
+        objects.add(diskObj)
     }
+    return objects
 }

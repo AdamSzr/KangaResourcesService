@@ -1,10 +1,10 @@
 package com.data.service
 
 import com.data.service.model.ResponseBodyStructure
+import com.data.service.util.GetDiskObjects
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
-import org.springframework.util.MimeType
 import org.springframework.util.MimeTypeUtils
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -88,40 +88,12 @@ class ExampleController {
             }
         }
 
-        val res = ResponseBodyStructure(fullPathString)
-//        try {
-//
-//            val driveObjInfo = Files.readAttributes(fullPath, BasicFileAttributes::class.java)
-//
-//            System.out.println(
-//                    "path-${fullPathString} || isDir-${driveObjInfo.isDirectory} || File-${driveObjInfo.isRegularFile}"
-//            )
-//            if (driveObjInfo.isDirectory) {
-//                val path1 = Paths.get(fullPathString)
-//                System.out.println(path1.name)
-//                if (path1.name == "data") {
-//                    System.out.println("inside")
-//                    val innerItems = File(fullPathString).listFiles()
-//                    val predicate: (File) -> Boolean = { it.name == path1.name }
-//                    innerItems.any(predicate)
-//                    for (fileEntry in innerItems) {
-//                        println("[ITEM] -> " + fileEntry.name)
-//                    }
-//                }
-//                System.out.println(path1.name)
-//                res.addObject(DiskObject("item1.txt", DiskObjectType.FILE))
-//                res.addObject(DiskObject("intel.pdf", DiskObjectType.FILE))
-//                res.addObject(DiskObject("files", DiskObjectType.DIR))
-//            }
-//        } catch (ex: Exception) {
-//            System.out.println(ex)
-//        }
-
-        //        System.out.println(fullPath)
-        //        for (fileEntry in File(fullPath).listFiles()) {
-        //            println(fileEntry.isFile)
-        //        }
+        val items = getFilesFromDir(parrentPath)
+        val innerObjects = GetDiskObjects(items as Array<File>)
+        val res = ResponseBodyStructure(fullPathString,innerObjects)
+//        items?.forEach { f -> res.addObject(GetDiskObjects(f)) }
 
         return res
-    }
+        }
+
 }

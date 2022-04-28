@@ -1,11 +1,6 @@
 package com.data.service.model
 
-class ResponseBodyStructure (val path:String){
-    val innerObjects = mutableListOf<DiskObject>()
-
-    public fun addObject(obj:DiskObject){
-        innerObjects.add(obj)
-    }
+class ResponseBodyStructure(val path:String, val innerObject: List<DiskObject>){
 }
 
 //DiscObject = {
