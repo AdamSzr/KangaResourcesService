@@ -8,8 +8,6 @@ import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.Path
 
-val PATH_PUBLIC_DIR = System.getenv("PWD") + "/src/main/resources/static/data/";
-
 
 @RestController
 class DataServiceController{

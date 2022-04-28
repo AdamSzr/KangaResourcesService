@@ -6,10 +6,6 @@ class ResponseBodyStructure (val path:String){
     public fun addObject(obj:DiskObject){
         innerObjects.add(obj)
     }
-
-    override fun toString(): String {
-        return " \"path\":\"${path}\" , "
-    }
 }
 
 //DiscObject = {
