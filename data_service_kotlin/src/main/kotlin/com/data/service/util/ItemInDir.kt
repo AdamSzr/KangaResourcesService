@@ -1,4 +1,5 @@
 package com.data.service.util
 
-class ItemInDir {
+class ItemInDir(val dirPath:String, val item:String) {
+
 }
