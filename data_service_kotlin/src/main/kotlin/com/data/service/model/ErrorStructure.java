@@ -1,6 +1,6 @@
 package com.data.service.model;
 
-public class ErrorStructure {
+public class ErrorStructure (val code:Integer, ) {
     private int code;
     private String description;
     private ErrorStructure(){
@@ -23,7 +23,7 @@ public class ErrorStructure {
     }
 
     public static ErrorStructure code(int number){
-      ErrorStructure z = new ErrorStructure();
+      ErrorStructure z =new ErrorStructure();
       z.code=number;
       return z;
     }

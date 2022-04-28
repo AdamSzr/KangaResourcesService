@@ -1,14 +1,14 @@
 package com.data.service.model
 
-
-
-class DiskObject (val name:String,val type: DiskObjectType){
-
-}
 class ResponseBodyStructure (val path:String){
     val innerObjects = mutableListOf<DiskObject>()
+
     public fun addObject(obj:DiskObject){
         innerObjects.add(obj)
+    }
+
+    override fun toString(): String {
+        return " \"path\":\"${path}\" , "
     }
 }
 
