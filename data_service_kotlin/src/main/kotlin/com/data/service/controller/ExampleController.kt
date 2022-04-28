@@ -1,18 +1,23 @@
 package com.data.service
 
 import com.data.service.model.ResponseBodyStructure
-import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.core.io.FileSystemResource
-import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.exists
+import org.springframework.http.HttpHeaders
+import org.springframework.http.ResponseEntity
+import org.springframework.util.MimeType
+import org.springframework.util.MimeTypeUtils
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+
 
 @RestController
 class ExampleController {
@@ -49,9 +54,17 @@ class ExampleController {
 
         println("parentExist ->" + parrentPath.exists())
         println("fullPathExist -> " + fullPath.exists())
+
         if(fullPath.exists() && fullPath.isRegularFile()) {
             println("SUCCESS - 1")
-            return getRequestedResource(fullPath)
+            val responseHeaders = HttpHeaders()
+            responseHeaders.set(
+                "Content-Disposition","attachment; filename=${fileWithExt}"
+            )
+
+            return ResponseEntity.ok()
+                .headers(responseHeaders)
+                .body(Files.readAllBytes(fullPath))
         }
 
         println("onlyFileWithExt -> " + fileWithExt)
@@ -60,10 +73,18 @@ class ExampleController {
         if(!fullPath.exists() && parrentPath.exists())
         {
             val requestedItem = tryFindFileInDir(parrentPath,fileWithoutExt)
-            println("isInParentDir -> " + requestedItem)
+            println("isInParentDir -> $requestedItem")
             if(requestedItem!=null) {
                 println("SUCCESS - 2")
-                return FileSystemResource(requestedItem.absoluteFile)
+                val responseHeaders = HttpHeaders()
+                responseHeaders.set(
+                    "Content-Disposition","attachment; filename=${requestedItem.name}"
+                )
+                responseHeaders.set("Content-Type",MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE)
+
+                return ResponseEntity.ok()
+                    .headers(responseHeaders)
+                    .body(Files.readAllBytes(requestedItem.toPath()))
             }
         }
 
