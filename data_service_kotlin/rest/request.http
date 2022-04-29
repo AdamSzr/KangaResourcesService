@@ -1,11 +1,28 @@
-### JPG
-GET  http://127.0.0.1:8080/example?path=/dir/ok HTTP/1.1
+### Path no exist
+GET  http://127.0.0.1:8080/api/data?path=/dir/ooo/bb HTTP/1.1
 ###
 
-###
-GET  http://127.0.0.1:8080/example?path=/dir/okey HTTP/1.1
+### parent path exist use ?list=true.
+GET  http://127.0.0.1:8080/api/data?path=/dir/ok HTTP/1.1
 ###
 
-### JPG
-GET  http://127.0.0.1:8080/example?path=/dir/okey.jpg HTTP/1.1
+### parent path exist WITH ?list=true
+GET  http://127.0.0.1:8080/api/data?path=/dir/ok&list=true HTTP/1.1
+###
+
+### get resource WITHOUT EXT
+GET  http://127.0.0.1:8080/api/data?path=/dir/okey HTTP/1.1
+###
+
+### GET jpg
+GET  http://127.0.0.1:8080/api/data?path=/dir/okey.jpg HTTP/1.1
+###
+
+
+### List items in path
+GET  http://localhost:8080/api/data?path=/dir/binary_data&list=true HTTP/1.1
+###
+
+### GET BINARY_DATA
+GET  http://localhost:8080/api/data?path=/dir/binary_data/demo&list=true HTTP/1.1
 ###
