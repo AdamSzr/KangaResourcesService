@@ -14,3 +14,8 @@ export const NO_CONTENT =  {
     code: 3,
     message: "Under this path does not exist specyfied resources, go back to upper dir and list files"
 } as RequestError
+
+export const BAD_SIZE_FORMAT =  {
+    code: 4,
+    message: "Correct size format should be ?size=50x50"
+} as RequestError
