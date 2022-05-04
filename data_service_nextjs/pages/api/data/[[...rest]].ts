@@ -25,7 +25,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  /** Full path that can be either dir of file */
   if (req.query.path == undefined)
     return res.status(404).json(MISSING_PATH_QUERY)
 

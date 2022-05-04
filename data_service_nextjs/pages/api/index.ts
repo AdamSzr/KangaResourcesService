@@ -5,5 +5,5 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    res.redirect('/api/data')
+    res.redirect('/api/data?path=&list=true')
 }

@@ -2,7 +2,6 @@ import { readdir } from "fs/promises";
 import fs from "fs";
 import path from "path";
 
-
 export function isDir(filePath: string) {
   return fs.statSync(filePath).isDirectory();
 }
@@ -21,7 +20,6 @@ export async function tryFindItemInDir(directory: string, itemName: string) {
 
   return { requestedItem, itemsInDir };
 }
-
 
 /**
  * 
