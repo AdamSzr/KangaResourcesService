@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 import {
   directoryExist,
-  getObjectInfo ,
+  getObjectInfo,
   isDir,
 } from "../../../utils/file";
 import { readFile } from "fs/promises";
@@ -31,7 +31,6 @@ export default async function handler(
   const listDir = Boolean(req.query.list);
   const size = req.query.size as string;
   const { dir, base } = path.parse(filePath); //dir is a parent for base, base can contain either DIR name or FILE name (with or without ext)
-
   try {
     if (!directoryExist(dir)) return res.status(404).send(WRONG_PATH);
 
