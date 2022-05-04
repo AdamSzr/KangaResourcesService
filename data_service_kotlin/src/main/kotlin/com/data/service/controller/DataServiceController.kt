@@ -24,6 +24,40 @@ import kotlin.io.path.isRegularFile
 
 @RestController
 class DataServiceController {
+    @GetMapping("/api/data")
+    fun dataProviderHandler(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
+        val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?') // remove query from URL
+        val itemWithoutExt = getItemWithoutExt(fullPathString)
+        val fullPath = Path(fullPathString)
+        val parentPath = fullPath.parent
+
+        if (!parentPath.exists())
+            return createErrorResponse(HttpStatus.BAD_REQUEST,REQUESTED_PATH_NOT_EXIST)
+
+        if (fullPath.exists() && fullPath.isDirectory() && !list)
+            return createErrorResponse(HttpStatus.NOT_FOUND,REQUESTED_OBJ_IS_DIR)
+
+        if (fullPath.exists() && fullPath.isRegularFile())
+            return createResponseWithFile(fullPathString)
+
+        if (fullPath.exists() && fullPath.isDirectory() && list)
+            return createResponseWithDirectoryStructure(fullPath)
+
+        // parentPath exist && fullPath !exist -> possibly a request for a file, the file name is without ext
+        val requestedItem = tryFindItemInDir(parentPath, itemWithoutExt)
+
+        if (requestedItem == null)
+           return createErrorResponse(HttpStatus.NO_CONTENT, NO_CONTENT)
+
+        return createResponseWithFile(requestedItem.path)
+    }
+
+    fun getItemWithoutExt(fullPath:String): String{
+        val itemWithExt = fullPath.substringAfterLast('/')
+        val itemWithoutExt = itemWithExt.substringBeforeLast('.')
+        return itemWithoutExt
+    }
+
     fun getFilesFromDir(dir: Path): Array<out File>? {
         return File(dir.toString()).listFiles()
     }
@@ -59,36 +93,6 @@ class DataServiceController {
 
     fun createErrorResponse(status:HttpStatus, error:ErrorStructure): ResponseEntity<ErrorStructure> {
         return ResponseEntity.status(status).body(error)
-    }
-
-    @GetMapping("/api/data")
-    fun dataProviderHandler(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
-        val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?')
-        val itemWithExt = fullPathString.substringAfterLast('/')
-        val itemWithoutExt = itemWithExt.substringBeforeLast('.')
-        val fullPath = Path(fullPathString)
-        val parentPath = fullPath.parent
-
-        if (!parentPath.exists())
-            return createErrorResponse(HttpStatus.BAD_REQUEST,REQUESTED_PATH_NOT_EXIST)
-
-        if (fullPath.exists() && fullPath.isDirectory() && !list)
-            return createErrorResponse(HttpStatus.NOT_FOUND,REQUESTED_OBJ_IS_DIR)
-
-        if (fullPath.exists() && fullPath.isRegularFile())
-            return createResponseWithFile(fullPathString)
-
-        if (fullPath.exists() && fullPath.isDirectory() && list)
-            return createResponseWithDirectoryStructure(fullPath)
-
-        // parentPath exist && fullPath !exist -> must be a request for a file without ext
-        val requestedItem = tryFindItemInDir(parentPath, itemWithoutExt)
-
-        if (requestedItem == null)
-           return createErrorResponse(HttpStatus.NO_CONTENT, NO_CONTENT)
-
-
-        return createResponseWithFile(requestedItem.path)
     }
 
 }
