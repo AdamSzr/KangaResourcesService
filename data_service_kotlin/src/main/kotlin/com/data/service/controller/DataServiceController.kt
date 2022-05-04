@@ -23,19 +23,14 @@ import kotlin.io.path.isRegularFile
 @RestController
 class DataServiceController {
     fun getFilesFromDir(dir: Path): Array<out File>? {
-        println("getFilesFromDir -> " + dir)
         return File(dir.toString()).listFiles()
     }
 
     fun tryFindItemInDir(dirPath: Path, fileWithoutExt: String): File? {
         val innerItems = getFilesFromDir(dirPath)
-        println("itemToFind ->" + fileWithoutExt)
-        for (x in innerItems!!)
-            println(x.name.substringBeforeLast('.'))
-
 
         val predicate: (File) -> Boolean = { it.name.substringBeforeLast('.') == fileWithoutExt }
-        return innerItems.find(predicate)
+        return innerItems!!.find(predicate)
     }
 
 
@@ -52,9 +47,7 @@ class DataServiceController {
             "Content-Disposition", "attachment; filename=${file.name}"
         )
 
-        val contentType = probeContentType(file.toPath())
-        println("MIME_TYPE ->$contentType")
-        responseHeaders.set("Content-Type", contentType)
+        responseHeaders.set("Content-Type", probeContentType(file.toPath()))
 
         return ResponseEntity.ok()
             .headers(responseHeaders)
@@ -62,21 +55,12 @@ class DataServiceController {
     }
 
     @GetMapping("/api/data")
-    fun two(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
+    fun dataProvider(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
         val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?')
-        val fileWithExt = fullPathString.substringAfterLast('/')
-        val fileWithoutExt = fileWithExt.substringBeforeLast('.')
+        val itemWithExt = fullPathString.substringAfterLast('/')
+        val itemWithoutExt = itemWithExt.substringBeforeLast('.')
         val fullPath = Path(fullPathString)
-        println("fullPath -> " + fullPath.toString())
-
         val parentPath = fullPath.parent
-        println("parentPath -> $parentPath")
-
-        println("parentExist ->" + parentPath.exists())
-        println("fullPathExist -> " + fullPath.exists())
-        println("parentIsDir ->" + parentPath.isDirectory())
-        println("fullPathIsFile-> " + fullPath.isRegularFile())
-        println("fullPathIsDir-> " + fullPath.isDirectory())
 
         if (!parentPath.exists())
             return ERROR_REQUESTED_PATH_NOT_EXIST
@@ -90,15 +74,12 @@ class DataServiceController {
         if (fullPath.exists() && fullPath.isDirectory() && list)
             return createResponseWithDirectoryStructure(fullPath)
 
-        println("onlyFileWithExt -> " + fileWithExt)
-        println("onlyFileWihtouthExt -> " + fileWithoutExt)
-
-        println("findIn -> $parentPath, file -> $fileWithoutExt")
-        val requestedItem = tryFindItemInDir(parentPath, fileWithoutExt)
-        println("isItemInParentDir -> $requestedItem")
+        // parentPath exist && fullPath !exist -> must be a request for a file without ext
+        val requestedItem = tryFindItemInDir(parentPath, itemWithoutExt)
 
         if (requestedItem == null)
             return NO_CONTENT
+
 
         return createResponseWithFile(requestedItem.path)
     }
