@@ -1,14 +1,4 @@
 package com.data.service.model
 
-class ResponseBodyStructure(val path:String, val innerObject: List<DiskObject>){
+class ResponseBodyStructure(val path:String, val items: List<DiskObject>){
 }
-
-//DiscObject = {
-//    type: "DIR" | "FILE"
-//    name: string
-//}
-//
-//ResponseBodyStructure = {
-//    path: string
-//    items: DiscObject[]
-//}

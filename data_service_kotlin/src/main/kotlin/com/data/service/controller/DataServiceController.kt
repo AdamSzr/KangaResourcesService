@@ -1,8 +1,8 @@
 package com.data.service
 
-import com.data.service.errors.ERROR_MISSING_QUERY
 import com.data.service.errors.ERROR_REQUESTED_OBJ_IS_DIR
 import com.data.service.errors.ERROR_REQUESTED_PATH_NOT_EXIST
+import com.data.service.errors.NO_CONTENT
 import com.data.service.model.ResponseBodyStructure
 import com.data.service.util.GetDiskObjects
 import org.springframework.http.HttpHeaders
@@ -21,16 +21,15 @@ import kotlin.io.path.isRegularFile
 
 
 @RestController
-class DataServiceController{
-
+class DataServiceController {
     fun getFilesFromDir(dir: Path): Array<out File>? {
-        println("getFilesFromDir -> "+ dir)
+        println("getFilesFromDir -> " + dir)
         return File(dir.toString()).listFiles()
     }
 
-    fun tryFindFileInDir(dirPath: Path, fileWithoutExt:String): File? {
+    fun tryFindItemInDir(dirPath: Path, fileWithoutExt: String): File? {
         val innerItems = getFilesFromDir(dirPath)
-        println("fileToFind ->"+fileWithoutExt)
+        println("itemToFind ->" + fileWithoutExt)
         for (x in innerItems!!)
             println(x.name.substringBeforeLast('.'))
 
@@ -40,21 +39,21 @@ class DataServiceController{
     }
 
 
-    fun createResponseWithDirectoryStructure(path:Path): ResponseBodyStructure {
-        val items = getFilesFromDir(path)
-        val innerObjects = GetDiskObjects(items as Array<File>)
-        return ResponseBodyStructure(path.toString(),innerObjects)
+    fun createResponseWithDirectoryStructure(path: Path): ResponseBodyStructure {
+        val innerObjects = getFilesFromDir(path)
+        val items = GetDiskObjects(innerObjects as Array<File>)
+        return ResponseBodyStructure(path.toString(), items)
     }
 
     fun createResponseWithFile(path: String): ResponseEntity<ByteArray> {
         val file = File(path)
         val responseHeaders = HttpHeaders()
         responseHeaders.set(
-            "Content-Disposition","attachment; filename=${file.name}"
+            "Content-Disposition", "attachment; filename=${file.name}"
         )
 
         val contentType = probeContentType(file.toPath())
-        println("MIME_TYPE ->"+contentType)
+        println("MIME_TYPE ->$contentType")
         responseHeaders.set("Content-Type", contentType)
 
         return ResponseEntity.ok()
@@ -63,55 +62,45 @@ class DataServiceController{
     }
 
     @GetMapping("/api/data")
-    public fun two(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
+    fun two(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
         val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?')
         val fileWithExt = fullPathString.substringAfterLast('/')
         val fileWithoutExt = fileWithExt.substringBeforeLast('.')
-
         val fullPath = Path(fullPathString)
         println("fullPath -> " + fullPath.toString())
 
-        val parrentPath = fullPath.parent
-        println("parentPath -> " + parrentPath.toString())
+        val parentPath = fullPath.parent
+        println("parentPath -> $parentPath")
 
-        println("parentExist ->" + parrentPath.exists())
+        println("parentExist ->" + parentPath.exists())
         println("fullPathExist -> " + fullPath.exists())
-        println("parentIsFile ->" + parrentPath.isRegularFile())
-        println("parentIsDir ->" + parrentPath.isDirectory())
+        println("parentIsDir ->" + parentPath.isDirectory())
         println("fullPathIsFile-> " + fullPath.isRegularFile())
         println("fullPathIsDir-> " + fullPath.isDirectory())
 
-        if(!parrentPath.exists())
+        if (!parentPath.exists())
             return ERROR_REQUESTED_PATH_NOT_EXIST
 
-        if(fullPath.exists() && fullPath.isDirectory() && !list)
+        if (fullPath.exists() && fullPath.isDirectory() && !list)
             return ERROR_REQUESTED_OBJ_IS_DIR
 
-        if(fullPath.exists() && fullPath.isRegularFile()) {
-            println("SUCCESS - 1")
-            return  createResponseWithFile(fullPathString)
-        }
+        if (fullPath.exists() && fullPath.isRegularFile())
+            return createResponseWithFile(fullPathString)
 
-        println("onlyFileWithExt -> " + fileWithExt)
-        println("onlyFileWhtouthExt -> " + fileWithoutExt)
-
-        if(!fullPath.exists() && parrentPath.exists())
-        {
-            println("findIn -> $parrentPath, file -> $fileWithoutExt")
-            val requestedItem = tryFindFileInDir(parrentPath,fileWithoutExt)
-            println("isInParentDir -> $requestedItem")
-            println("list -> $list")
-            if(requestedItem==null && list)
-               return createResponseWithDirectoryStructure(parrentPath)
-
-            if(requestedItem!=null)
-                return createResponseWithFile(requestedItem.path)
-        }
-
-        if(fullPath.isDirectory() && list)
+        if (fullPath.exists() && fullPath.isDirectory() && list)
             return createResponseWithDirectoryStructure(fullPath)
 
-        return ERROR_MISSING_QUERY
+        println("onlyFileWithExt -> " + fileWithExt)
+        println("onlyFileWihtouthExt -> " + fileWithoutExt)
+
+        println("findIn -> $parentPath, file -> $fileWithoutExt")
+        val requestedItem = tryFindItemInDir(parentPath, fileWithoutExt)
+        println("isItemInParentDir -> $requestedItem")
+
+        if (requestedItem == null)
+            return NO_CONTENT
+
+        return createResponseWithFile(requestedItem.path)
     }
 
 }
