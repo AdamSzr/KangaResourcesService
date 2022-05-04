@@ -3,8 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import path from "path";
 import {
   directoryExist,
-  getDirStruct,
-  getObjectInfo as getFileObjectInfo,
+  getObjectInfo ,
   isDir,
 } from "../../../utils/file";
 import { readFile } from "fs/promises";
@@ -28,22 +27,22 @@ export default async function handler(
   if (req.query.path == undefined)
     return res.status(404).json(MISSING_PATH_QUERY)
 
-  const filePath = path.join(PUBLIC_DIR_ABS_PATH, ...req.query.path);
+  const filePath = path.join(PUBLIC_DIR_ABS_PATH, req.query.path as string);
   const listDir = Boolean(req.query.list);
   const size = req.query.size as string;
-  const { dir, base } = path.parse(filePath); //dir is a parent for base, base can contain either DIR name or FILE name
+  const { dir, base } = path.parse(filePath); //dir is a parent for base, base can contain either DIR name or FILE name (with or without ext)
 
   try {
     if (!directoryExist(dir)) return res.status(404).send(WRONG_PATH);
 
     const { fullPath, requestedItem } =
-      await getFileObjectInfo(dir, base);
+      await getObjectInfo(dir, base);
 
     if (!requestedItem) return res.status(400).send(NO_CONTENT);
 
     if (isDir(fullPath))
       if (listDir) {
-        const dirInfo = directoryAnalizer(filePath, await getDirStruct(filePath));
+        const dirInfo = await directoryAnalizer(filePath);
         return res.status(200).send(dirInfo);
       } else return res.status(400).send(LIST_DIRECTORY_ERROR);
 

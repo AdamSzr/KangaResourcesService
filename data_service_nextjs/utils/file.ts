@@ -22,7 +22,6 @@ export async function tryFindItemInDir(directory: string, itemName: string) {
 }
 
 /**
- * 
  * @param directory directory that possibly contain item
  * @param itemName item name to search
  * @returns if `requestedItem` is undefined then directory does not contain item, otherwise `requestedItem` is a correct item name with extension

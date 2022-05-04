@@ -2,6 +2,7 @@ import { DiskObject } from "../models/DiskObject";
 import { DirectoryInfo } from "../models/DirectoryInfo";
 import fs from "fs";
 import path from "path";
+import { getDirStruct } from "./file";
 
 function produceDiskObject(dir: string, item: string) {
   let z = {} as DiskObject;
@@ -13,7 +14,8 @@ function produceDiskObject(dir: string, item: string) {
   return z;
 }
 
-export function directoryAnalizer(baseDir: string, innerObjects: string[]) {
+export async function directoryAnalizer(baseDir: string) {
+  let innerObjects = await getDirStruct(baseDir)
   let z = {} as DirectoryInfo;
   z.path = baseDir;
   z.items = innerObjects.map((i) => produceDiskObject(baseDir, i));
