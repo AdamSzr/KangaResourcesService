@@ -13,10 +13,8 @@ import {
   NO_CONTENT,
   WRONG_PATH,
 } from "../../../errors/errors";
-import mime from 'mime-types'
 import { directoryAnalizer as directoryAnalizer } from "../../../utils/directoryAnalizer";
 import { ENABLE_FILE_DOWNLOAD } from "../../../settings";
-import { resizeImage } from "../../../utils/image";
 
 export const PUBLIC_DIR_ABS_PATH = path.join(process.env['PWD'] || "", "public/data");
 
@@ -49,10 +47,6 @@ export default async function handler(
       res.setHeader("Content-Disposition", `attachment; filename=${requestedItem}`);
 
     let buffer = await readFile(fullPath);
-
-    const mimeType = mime.lookup(requestedItem)
-    if (mimeType && mimeType.startsWith('image'))
-      buffer = await resizeImage(buffer, size) as Buffer
 
     return res.status(200).send(buffer);
   } catch (err: any) {
