@@ -1,11 +1,13 @@
 package com.data.service
 
-import com.data.service.errors.ERROR_REQUESTED_OBJ_IS_DIR
-import com.data.service.errors.ERROR_REQUESTED_PATH_NOT_EXIST
+import com.data.service.errors.REQUESTED_OBJ_IS_DIR
+import com.data.service.errors.REQUESTED_PATH_NOT_EXIST
 import com.data.service.errors.NO_CONTENT
+import com.data.service.model.ErrorStructure
 import com.data.service.model.ResponseBodyStructure
 import com.data.service.util.GetDiskObjects
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -43,19 +45,24 @@ class DataServiceController {
     fun createResponseWithFile(path: String): ResponseEntity<ByteArray> {
         val file = File(path)
         val responseHeaders = HttpHeaders()
-        responseHeaders.set(
-            "Content-Disposition", "attachment; filename=${file.name}"
-        )
-
         responseHeaders.set("Content-Type", probeContentType(file.toPath()))
+
+        if(FILE_DOWNLOAD_ENABLE)
+            responseHeaders.set(
+                "Content-Disposition", "attachment; filename=${file.name}"
+            )
 
         return ResponseEntity.ok()
             .headers(responseHeaders)
             .body(Files.readAllBytes(file.toPath()))
     }
 
+    fun createErrorResponse(status:HttpStatus, error:ErrorStructure): ResponseEntity<ErrorStructure> {
+        return ResponseEntity.status(status).body(error)
+    }
+
     @GetMapping("/api/data")
-    fun dataProvider(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
+    fun dataProviderHandler(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
         val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?')
         val itemWithExt = fullPathString.substringAfterLast('/')
         val itemWithoutExt = itemWithExt.substringBeforeLast('.')
@@ -63,10 +70,10 @@ class DataServiceController {
         val parentPath = fullPath.parent
 
         if (!parentPath.exists())
-            return ERROR_REQUESTED_PATH_NOT_EXIST
+            return createErrorResponse(HttpStatus.BAD_REQUEST,REQUESTED_PATH_NOT_EXIST)
 
         if (fullPath.exists() && fullPath.isDirectory() && !list)
-            return ERROR_REQUESTED_OBJ_IS_DIR
+            return createErrorResponse(HttpStatus.NOT_FOUND,REQUESTED_OBJ_IS_DIR)
 
         if (fullPath.exists() && fullPath.isRegularFile())
             return createResponseWithFile(fullPathString)
@@ -78,7 +85,7 @@ class DataServiceController {
         val requestedItem = tryFindItemInDir(parentPath, itemWithoutExt)
 
         if (requestedItem == null)
-            return NO_CONTENT
+           return createErrorResponse(HttpStatus.NO_CONTENT, NO_CONTENT)
 
 
         return createResponseWithFile(requestedItem.path)

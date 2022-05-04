@@ -1,10 +1,9 @@
 package com.data.service
-import com.data.service.errors.ERROR_REQUESTED_OBJ_IS_DIR
-import com.data.service.errors.ERROR_REQUESTED_PATH_NOT_EXIST
+import com.data.service.errors.REQUESTED_OBJ_IS_DIR
+import com.data.service.errors.REQUESTED_PATH_NOT_EXIST
 import com.data.service.errors.NO_CONTENT
 import com.data.service.model.ResponseBodyStructure
 import com.data.service.util.GetDiskObjects
-import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.util.MimeTypeUtils
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -67,10 +65,10 @@ class ExampleController {
         println("fullPathIsFile-> " + fullPath.isRegularFile())
 
         if(!parrentPath.exists())
-            return ERROR_REQUESTED_PATH_NOT_EXIST
+            return REQUESTED_PATH_NOT_EXIST
 
         if(fullPath.exists() && fullPath.isDirectory() && !list)
-            return ERROR_REQUESTED_OBJ_IS_DIR
+            return REQUESTED_OBJ_IS_DIR
 
         if(fullPath.exists() && fullPath.isRegularFile()) {
             println("SUCCESS - 1")
