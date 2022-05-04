@@ -9,15 +9,15 @@ import {
 } from "../../../utils/file";
 import { readFile } from "fs/promises";
 import {
-  BAD_SIZE_FORMAT,
   LIST_DIRECTORY_ERROR,
+  MISSING_PATH_QUERY,
   NO_CONTENT,
   WRONG_PATH,
 } from "../../../errors/errors";
 import mime from 'mime-types'
-import sharp from 'sharp'
-import { catalogueAnalizer as directoryAnalizer } from "../../../utils/directoryAnalizer";
-import { ImageSize } from "../../../models/ImageSize";
+import { directoryAnalizer as directoryAnalizer } from "../../../utils/directoryAnalizer";
+import { ENABLE_FILE_DOWNLOAD } from "../../../settings";
+import { resizeImage } from "../../../utils/image";
 
 export const PUBLIC_DIR_ABS_PATH = path.join(process.cwd(), "public/data");
 
@@ -25,13 +25,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  /** Full path that can be either dir of file */ 
-  const filePath = path.join(PUBLIC_DIR_ABS_PATH, ...req.query.rest??"");
-  const listDir = Boolean(req.query.list) ;
-  const size = req.query.size as string;
-  try {
-    const { dir, base } = path.parse(filePath);
+  /** Full path that can be either dir of file */
+  if (req.query.path == undefined)
+    return res.status(404).json(MISSING_PATH_QUERY)
 
+  const filePath = path.join(PUBLIC_DIR_ABS_PATH, ...req.query.path);
+  const listDir = Boolean(req.query.list);
+  const size = req.query.size as string;
+  const { dir, base } = path.parse(filePath); //dir is a parent for base, base can contain either DIR name or FILE name
+
+  try {
     if (!directoryExist(dir)) return res.status(404).send(WRONG_PATH);
 
     const { fullPath, requestedItem } =
@@ -44,36 +47,18 @@ export default async function handler(
         const dirInfo = directoryAnalizer(filePath, await getDirStruct(filePath));
         return res.status(200).send(dirInfo);
       } else return res.status(400).send(LIST_DIRECTORY_ERROR);
- 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=${requestedItem}`
-    );
+
+    if (ENABLE_FILE_DOWNLOAD)
+      res.setHeader("Content-Disposition", `attachment; filename=${requestedItem}`);
 
     let buffer = await readFile(fullPath);
 
-    if(size)
-    buffer = await tryResizeImage(res,requestedItem,buffer,size) as Buffer
-    
+    const mimeType = mime.lookup(requestedItem)
+    if (mimeType && mimeType.startsWith('image'))
+      buffer = await resizeImage(buffer, size) as Buffer
+
     return res.status(200).send(buffer);
   } catch (err: any) {
     return res.status(404).send(err.message);
-  }
-}
-
-
-function tryResizeImage(res:NextApiResponse,requestedItem:string,buffer:Buffer,size:string){
-  const mimeType = mime.lookup(requestedItem)
-  if(mimeType && mimeType.startsWith('image') )
-  {
-    const targetSize = ImageSize.parse(size)
-    console.log(targetSize)
-    if(!targetSize)
-    return buffer
-
-    return sharp(buffer).resize(targetSize.width,targetSize.height,{fit:"fill"}).toBuffer()
-    // return res.status(400).json(BAD_SIZE_FORMAT)
-
-    // return res.status(200).send(sharp(buffer).resize(targetSize.width,targetSize.height,{fit:"fill"})) 
   }
 }

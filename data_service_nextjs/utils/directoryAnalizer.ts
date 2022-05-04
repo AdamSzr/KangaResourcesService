@@ -3,7 +3,7 @@ import { DirectoryInfo } from "../models/DirectoryInfo";
 import fs from "fs";
 import path from "path";
 
-function produceDriveObject(dir: string, item: string) {
+function produceDiskObject(dir: string, item: string) {
   let z = {} as DiskObject;
   const stats = fs.statSync(path.join(dir, item));
   z.type = stats.isDirectory() ? "DIR" : "FILE";
@@ -13,9 +13,9 @@ function produceDriveObject(dir: string, item: string) {
   return z;
 }
 
-export function catalogueAnalizer(baseDir: string, innerObjects: string[]) {
+export function directoryAnalizer(baseDir: string, innerObjects: string[]) {
   let z = {} as DirectoryInfo;
   z.path = baseDir;
-  z.items = innerObjects.map((i) => produceDriveObject(baseDir, i));
+  z.items = innerObjects.map((i) => produceDiskObject(baseDir, i));
   return z;
 }
