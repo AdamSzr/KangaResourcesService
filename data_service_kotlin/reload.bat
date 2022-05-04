@@ -1,0 +1,1 @@
+docker stop data_service_kotlin & docker rmi data_service_kotlin & mvnw clean package && docker build -t data_service_kotlin . && docker run -d -p 8080:8080 data_service_kotlin

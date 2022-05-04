@@ -18,7 +18,7 @@ import { directoryAnalizer as directoryAnalizer } from "../../../utils/directory
 import { ENABLE_FILE_DOWNLOAD } from "../../../settings";
 import { resizeImage } from "../../../utils/image";
 
-export const PUBLIC_DIR_ABS_PATH = path.join(process.cwd(), "public/data");
+export const PUBLIC_DIR_ABS_PATH = path.join(process.env['PWD'] || "", "public/data");
 
 export default async function handler(
   req: NextApiRequest,
