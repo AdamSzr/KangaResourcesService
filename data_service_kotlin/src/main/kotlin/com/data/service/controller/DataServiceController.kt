@@ -3,10 +3,7 @@ package com.data.service
 import com.data.service.errors.REQUESTED_OBJ_IS_DIR
 import com.data.service.errors.REQUESTED_PATH_NOT_EXIST
 import com.data.service.errors.NO_CONTENT
-import com.data.service.model.DiskObject
-import com.data.service.model.DiskObjectType
-import com.data.service.model.ErrorStructure
-import com.data.service.model.ResponseBodyStructure
+import com.data.service.model.*
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -29,7 +26,9 @@ import kotlin.io.path.isRegularFile
 @RestController
 class DataServiceController {
     @GetMapping("/api/data")
-    fun dataProviderHandler(@RequestParam path: String, @RequestParam(required = false) list: Boolean): Any {
+    fun dataProviderHandler(@RequestParam path: String,
+                            @RequestParam(required = false) list: Boolean,
+                            @RequestParam(required = false) size: String?): Any {
         val fullPathString = PATH_PUBLIC_DIR.plus(path).substringBefore('?') // remove query from URL
         val itemWithoutExt = getItemWithoutExt(fullPathString)
         val fullPath = Path(fullPathString)
@@ -57,20 +56,30 @@ class DataServiceController {
         if (requestedItem == null)
             return createResponseWithError(HttpStatus.NO_CONTENT, NO_CONTENT)
 
+        val contentType = probeContentType(requestedItem.toPath())
+        val newImgSize = parseImageSize(size)
 
-        var oryginalImg = ImageIO.read(requestedItem)// BufferedImage()//Image()
-        val resizedImg = oryginalImg.getScaledInstance(200,500, Image.SCALE_DEFAULT)
-        val baos =  ByteArrayOutputStream()
-        val buf = BufferedImage(200,500,BufferedImage.SCALE_DEFAULT)
-        buf.graphics.drawImage(resizedImg,0,0,null)
-        ImageIO.write(buf,"jpg", baos)
-        val responseHeaders = HttpHeaders()
-        responseHeaders.set("Content-Type", probeContentType(requestedItem.toPath()))
+        if(newImgSize!=null && contentType.startsWith("image"))
+        {
+            val resizedImg = resizeImage(requestedItem, newImgSize)
+            val responseHeaders = HttpHeaders()
+            responseHeaders.set("Content-Type", contentType)
+            return createResponseWithByteArr(resizedImg.toList().toByteArray(),responseHeaders)
+        }
 
-        return ResponseEntity.ok().headers(responseHeaders).body(baos.toByteArray())
-//        return createResponseWithFile(requestedItem.path)
+        return createResponseWithFile(requestedItem.path)
     }
 
+    fun resizeImage(imageFile:File,size: ImageSize):ByteArray
+    {
+        var oryginalImg = ImageIO.read(imageFile)
+        val resizedImg = oryginalImg.getScaledInstance(size.width,size.height, Image.SCALE_DEFAULT)
+        val baos =  ByteArrayOutputStream()
+        val buf = BufferedImage(size.width,size.height,BufferedImage.SCALE_DEFAULT)
+        buf.graphics.drawImage(resizedImg,0,0,null)
+        ImageIO.write(buf,"jpg", baos)
+        return baos.toByteArray()
+    }
     fun getItemWithoutExt(fullPath: String): String {
         val itemWithExt = fullPath.substringAfterLast('/')
         val itemWithoutExt = itemWithExt.substringBeforeLast('.')
@@ -104,12 +113,15 @@ class DataServiceController {
         return ResponseBodyStructure(path.toString(), items)
     }
 
-    fun createResponseWithByteArr(data :Array<Byte>): ResponseEntity<Array<Byte>> {
+    fun createResponseWithByteArr(data :ByteArray): ResponseEntity<ByteArray> {
         return ResponseEntity.ok()
             .body(data)
     }
+    fun createResponseWithByteArr(data :ByteArray,headers: HttpHeaders): ResponseEntity<ByteArray> {
+            return  ResponseEntity.ok().headers(headers).body(data)
+    }
 
-    fun createResponseWithFile(path: String): ResponseEntity<Array<Byte>> {
+    fun createResponseWithFile(path: String): ResponseEntity<ByteArray> {
         val file = File(path)
         val responseHeaders = HttpHeaders()
         responseHeaders.set("Content-Type", probeContentType(file.toPath()))
@@ -119,7 +131,8 @@ class DataServiceController {
                 "Content-Disposition", "attachment; filename=${file.name}"
             )
 
-        return  createResponseWithByteArr(Files.readAllBytes((file.toPath())).toTypedArray())
+        println("Send File -> createResponseWithFile() ")
+        return  createResponseWithByteArr(Files.readAllBytes((file.toPath())),responseHeaders)
 //        return ResponseEntity.ok()
 //            .headers(responseHeaders)
 //            .body(Files.readAllBytes(file.toPath()))
