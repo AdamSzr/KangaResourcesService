@@ -16,7 +16,7 @@ import {
 import { directoryAnalizer as directoryAnalizer } from "../../../utils/directoryAnalizer";
 import { ENABLE_FILE_DOWNLOAD } from "../../../settings";
 
-export const PUBLIC_DIR_ABS_PATH = path.join(process.env['PWD'] || "", "public/data");
+export const PUBLIC_DIR_ABS_PATH = process.env['DATA_ROOT_DIR'] as string
 
 export default async function handler(
   req: NextApiRequest,
@@ -43,6 +43,7 @@ export default async function handler(
         return res.status(200).send(dirInfo);
       } else return res.status(400).send(LIST_DIRECTORY_ERROR);
 
+    
     if (ENABLE_FILE_DOWNLOAD)
       res.setHeader("Content-Disposition", `attachment; filename=${requestedItem}`);
 
@@ -52,4 +53,10 @@ export default async function handler(
   } catch (err: any) {
     return res.status(404).send(err.message);
   }
+}
+
+export const config = {
+  api: {
+    responseLimit: false,
+  },
 }
