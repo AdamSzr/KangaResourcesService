@@ -48,8 +48,6 @@ class DataServiceController {
         if (fullPath.exists() && fullPath.isDirectory() && list)
             return createResponseWithDirectoryStructure(fullPath)
 
-
-
         // parentPath exist && fullPath !exist -> possibly a request for a file, the file name is without ext
         val requestedItem = tryFindItemInDir(parentPath, itemWithoutExt)
 
@@ -62,8 +60,7 @@ class DataServiceController {
         if(newImgSize!=null && contentType.startsWith("image"))
         {
             val resizedImg = resizeImage(requestedItem, newImgSize)
-            val responseHeaders = HttpHeaders()
-            responseHeaders.set("Content-Type", contentType)
+            val responseHeaders = createContentTypeHeader(requestedItem)
             return createResponseWithByteArr(resizedImg.toList().toByteArray(),responseHeaders)
         }
 
@@ -113,29 +110,29 @@ class DataServiceController {
         return ResponseBodyStructure(path.toString(), items)
     }
 
-    fun createResponseWithByteArr(data :ByteArray): ResponseEntity<ByteArray> {
-        return ResponseEntity.ok()
-            .body(data)
-    }
     fun createResponseWithByteArr(data :ByteArray,headers: HttpHeaders): ResponseEntity<ByteArray> {
-            return  ResponseEntity.ok().headers(headers).body(data)
+            return  ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(data)
+    }
+
+    fun createContentTypeHeader(filePath:File): HttpHeaders {
+        val responseHeaders = HttpHeaders()
+        responseHeaders.set("Content-Type", probeContentType(filePath.toPath()))
+        return responseHeaders
     }
 
     fun createResponseWithFile(path: String): ResponseEntity<ByteArray> {
         val file = File(path)
-        val responseHeaders = HttpHeaders()
-        responseHeaders.set("Content-Type", probeContentType(file.toPath()))
+        val headers = createContentTypeHeader(file)
 
         if (FILE_DOWNLOAD_ENABLE)
-            responseHeaders.set(
+            headers.set(
                 "Content-Disposition", "attachment; filename=${file.name}"
             )
 
-        println("Send File -> createResponseWithFile() ")
-        return  createResponseWithByteArr(Files.readAllBytes((file.toPath())),responseHeaders)
-//        return ResponseEntity.ok()
-//            .headers(responseHeaders)
-//            .body(Files.readAllBytes(file.toPath()))
+        return  createResponseWithByteArr(Files.readAllBytes((file.toPath())),headers)
     }
 
     fun createResponseWithError(status: HttpStatus, error: ErrorStructure): ResponseEntity<ErrorStructure> {
