@@ -4,6 +4,10 @@ import com.data.service.errors.REQUESTED_OBJ_IS_DIR
 import com.data.service.errors.REQUESTED_PATH_NOT_EXIST
 import com.data.service.errors.NO_CONTENT
 import com.data.service.model.*
+import com.data.service.responses.*
+import com.data.service.utils.getItemWithoutExt
+import com.data.service.utils.resizeImage
+import com.data.service.utils.tryFindItemInDir
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -33,9 +37,7 @@ class DataServiceController {
         val itemWithoutExt = getItemWithoutExt(fullPathString)
         val fullPath = Path(fullPathString)
         val parentPath = fullPath.parent
-        println(fullPath)
 
-        println("Parent ->"+parentPath.exists())
         if (!parentPath.exists())
             return createResponseWithError(HttpStatus.BAD_REQUEST, REQUESTED_PATH_NOT_EXIST)
 
@@ -67,76 +69,8 @@ class DataServiceController {
         return createResponseWithFile(requestedItem.path)
     }
 
-    fun resizeImage(imageFile:File,size: ImageSize):ByteArray
-    {
-        var oryginalImg = ImageIO.read(imageFile)
-        val resizedImg = oryginalImg.getScaledInstance(size.width,size.height, Image.SCALE_DEFAULT)
-        val baos =  ByteArrayOutputStream()
-        val buf = BufferedImage(size.width,size.height,BufferedImage.SCALE_DEFAULT)
-        buf.graphics.drawImage(resizedImg,0,0,null)
-        ImageIO.write(buf,"jpg", baos)
-        return baos.toByteArray()
-    }
-    fun getItemWithoutExt(fullPath: String): String {
-        val itemWithExt = fullPath.substringAfterLast('/')
-        val itemWithoutExt = itemWithExt.substringBeforeLast('.')
-        return itemWithoutExt
-    }
 
-    fun getFilesFromDir(dir: Path): Array<out File>? {
-        return File(dir.toString()).listFiles()
-    }
 
-    fun tryFindItemInDir(dirPath: Path, fileWithoutExt: String): File? {
-        val innerItems = getFilesFromDir(dirPath)
 
-        val predicate: (File) -> Boolean = { it.name.substringBeforeLast('.') == fileWithoutExt }
-        return innerItems!!.find(predicate)
-    }
-
-    fun getDiskObjects(filePaths: Array<File>): MutableList<DiskObject> {
-        val objects = mutableListOf<DiskObject>()
-        for (f in filePaths) {
-            val type = if (f.isDirectory) DiskObjectType.DIR else DiskObjectType.FILE
-            val diskObj = DiskObject(f.name, type)
-            objects.add(diskObj)
-        }
-        return objects
-    }
-
-    fun createResponseWithDirectoryStructure(path: Path): ResponseBodyStructure {
-        val innerObjects = getFilesFromDir(path)
-        val items = getDiskObjects(innerObjects as Array<File>)
-        return ResponseBodyStructure(path.toString(), items)
-    }
-
-    fun createResponseWithByteArr(data :ByteArray,headers: HttpHeaders): ResponseEntity<ByteArray> {
-            return  ResponseEntity
-                .ok()
-                .headers(headers)
-                .body(data)
-    }
-
-    fun createContentTypeHeader(filePath:File): HttpHeaders {
-        val responseHeaders = HttpHeaders()
-        responseHeaders.set("Content-Type", probeContentType(filePath.toPath()))
-        return responseHeaders
-    }
-
-    fun createResponseWithFile(path: String): ResponseEntity<ByteArray> {
-        val file = File(path)
-        val headers = createContentTypeHeader(file)
-
-        if (FILE_DOWNLOAD_ENABLE)
-            headers.set(
-                "Content-Disposition", "attachment; filename=${file.name}"
-            )
-
-        return  createResponseWithByteArr(Files.readAllBytes((file.toPath())),headers)
-    }
-
-    fun createResponseWithError(status: HttpStatus, error: ErrorStructure): ResponseEntity<ErrorStructure> {
-        return ResponseEntity.status(status).body(error)
-    }
 
 }
